@@ -1,0 +1,91 @@
+library(shiny)
+library(shinydashboard)
+library(quantmod)
+library(xts)
+library(dygraphs)
+library(leaflet)
+
+ui<-dashboardPage(
+  dashboardHeader(title = "STARBUCKS CASE STUDY"),
+  ###################################################################### 
+  dashboardSidebar(),
+  ########################################################################
+  dashboardBody(
+    tabsetPanel(
+      tabPanel(title  = "STOCK ANALYSIS",
+               
+               box(plotOutput("plot1"),width = 10),
+                box(plotOutput("plot2"))
+      ),
+      tabPanel(title = "Stores",
+               
+               fluidRow(
+                 
+                 box(plotOutput("plot3"))
+               )
+      ),
+      tabPanel(title ="Countries",
+      #           
+                fluidRow(
+                  box(plotOutput("plot4"),width = 10)
+                
+                )
+      ),
+      tabPanel(title="location mapper",
+        fluidRow(
+          leafletOutput("mymap")
+          #box(plotOutput("plot5"),width = 12)
+        )       )
+    )
+  ))
+######################backend###########################
+server <- function(input,output){
+  output$plot1<-renderPlot({
+    sym<-("SBUX")
+    getSymbols(sym)
+    
+    chart_Series(SBUX)
+  })
+  
+  output$plot2<-renderPlot({
+    sym<-("SBUX")
+    dy <- getSymbols
+    (sym)
+    #dyxts<-xts(dy$Close)
+    dyxtsbind<-cbind(dy$Close)
+    dygraph(dyxtsbind)
+  })
+#   
+   output$plot3<-renderPlot({
+    sb <- read.csv("C:/Users/MS00420757/Desktop/starbucks analysis/All_Starbucks_Locations_in_the_World.csv",header = TRUE)
+  own<-table(sb$Ownership.Type)
+  barplot(own,main = "Stores analysis",xlab = "types of stores",col = "cyan")
+  
+   })
+   output$plot4<-renderPlot({
+     sb <- read.csv("C:/Users/MS00420757/Desktop/starbucks analysis/All_Starbucks_Locations_in_the_World.csv",header = TRUE)
+     counts<-table(sb$Country)
+     
+     barplot(counts,main = "Country wise distribution",xlab="countries",col="red")
+     
+   })
+  
+  output$progressBox <- renderInfoBox({
+    infoBox(
+      "Progress", mylinear(), icon = icon("list"),
+      color = "purple"
+    )
+  })
+  output$mymap <- renderLeaflet({
+    starbucks <- read.csv("starbucks.csv", stringsAsFactors = FALSE)
+    str(starbucks)
+    atlanta <- subset(starbucks, City == "Atlanta" & State == "GA")
+    leaflet() %>% addTiles() %>% setView(-84.3847, 33.7613, zoom = 16) %>%
+      addMarkers(data = atlanta, lat = ~ Latitude, lng = ~ Longitude,popup = atlanta$Name) %>%
+      addPopups(-84.3847, 33.7616, 'Data journalists at work, <b>NICAR 2015</b>')
+    
+  })
+
+}
+
+shinyApp(ui,server)
